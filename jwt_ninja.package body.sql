@@ -72,6 +72,24 @@ as
     else
       l_payload_data := l_payload_data || ' "iat": ' || to_char(getepoch);
     end if;
+    if p_reg_claim_issuer is not null then
+      l_payload_data := l_payload_data || ', "iss": "'|| p_reg_claim_issuer ||'"';
+    end if;
+    if p_reg_claim_subject is not null then
+      l_payload_data := l_payload_data || ', "sub": "'|| p_reg_claim_subject ||'"';
+    end if;
+    if p_reg_claim_audience is not null then
+      l_payload_data := l_payload_data || ', "aud": "'|| p_reg_claim_audience ||'"';
+    end if;
+    if p_reg_claim_expiration is not null then
+      l_payload_data := l_payload_data || ', "exp": '|| p_reg_claim_expiration;
+    end if;
+    if p_reg_claim_notbefore is not null then
+      l_payload_data := l_payload_data || ', "nbf": '|| p_reg_claim_notbefore;
+    end if;
+    if p_reg_claim_jwtid is not null then
+      l_payload_data := l_payload_data || ', "jti": "'|| p_reg_claim_jwtid ||'"';
+    end if;
     l_payload_data := l_payload_data || '}';
 
     -- Encode parts
