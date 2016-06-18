@@ -1,19 +1,35 @@
 = jwt_ninja
 Morten Egan <morten@plsql.ninja>
- 
-This is the initial readme of the project. More will be added later. Like a description of what this is
- 
+
+This is a PLSQL implementation of JWT (JSON Web Tokens) as defined in https://tools.ietf.org/html/rfc7519[RFC7519]
+
 [NOTE]
 Since this is the first check-in, not much info has been added yet.
 But he will do soon.
- 
+
 == Summary
- 
+
 == Pre-requisites
- 
+
+The following privileges are needed in the schema installing this package:
+
+* grant create procedure to <schemaname>
+* grant execute on dbms_crypto to <schemaname>
+
 == Installation
- 
+
+To install the package simply run the the following 2 sql files as the schema owner of the package in sqlplus:
+
+SQL> @jwt_ninja.package.sql
+
+Package created.
+
+SQL> @"jwt_ninja.package body.sql"
+
+Package body created.
+
+SQL>
+
 == Procedures and Functions
- 
+
 == Examples
- 

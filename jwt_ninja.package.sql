@@ -9,6 +9,9 @@ as
   */
   npg_version               varchar2(250) := '0.0.1';
 
+  /* JWT default encryption key */
+  g_encryption_key          varchar2(150) := null;
+
   /* JWT JOSE header defaults */
   g_header_alg              varchar2(150) := 'HS256';
   g_header_typ              varchar2(150) := 'JWT';
@@ -21,6 +24,9 @@ as
   g_reg_claim_expiration    number := null;
   g_reg_claim_notbefore     number := null;
   g_reg_claim_issuedat      number := null;
+  g_reg_claim_expiration_d  date := null;
+  g_reg_claim_notbefore_d   date := null;
+  g_reg_claim_issuedat_d    date := null;
   g_reg_claim_jwtid         varchar2(4000) := null;
 
   /** Generate JWT token
@@ -34,10 +40,11 @@ as
     , p_reg_claim_issuer      in          varchar2 default g_reg_claim_issuer
     , p_reg_claim_subject     in          varchar2 default g_reg_claim_subject
     , p_reg_claim_audience    in          varchar2 default g_reg_claim_audience
-    , p_reg_claim_expiration  in          number default g_reg_claim_expiration
-    , p_reg_claim_notbefore   in          number default g_reg_claim_notbefore
-    , p_reg_claim_issuedat    in          number default g_reg_claim_issuedat
+    , p_reg_claim_expiration  in          date default g_reg_claim_expiration_d
+    , p_reg_claim_notbefore   in          date default g_reg_claim_notbefore_d
+    , p_reg_claim_issuedat    in          date default g_reg_claim_issuedat_d
     , p_reg_claim_jwtid       in          varchar2 default g_reg_claim_jwtid
+    , p_signature_key         in          varchar2 default g_encryption_key
   )
   return varchar2;
 

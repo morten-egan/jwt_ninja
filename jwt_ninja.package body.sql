@@ -33,7 +33,38 @@ as
 
   end getepoch;
 
-  function jwt_generate (
+  function encryptthis (
+    p_string                  in          varchar2
+    , p_key                   in          varchar2
+  )
+  return varchar2
+
+  as
+
+    l_set_key                 varchar2(150);
+
+  begin
+
+    if p_key is null then
+      l_set_key := gp_secret;
+    else
+      l_set_key := p_key;
+    end if;
+
+    if g_header_alg = 'HS256' then
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(gp_secret))));
+    elsif g_header_alg = 'HS384' then
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH384, utl_raw.cast_to_raw(gp_secret))));
+    elsif g_header_alg = 'HS512' then
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH512, utl_raw.cast_to_raw(gp_secret))));
+    else
+      g_header_alg := 'HS256';
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(gp_secret))));
+    end if;
+
+  end encryptthis;
+
+  function jwt_generate_int (
     p_header_alg              in          varchar2 default g_header_alg
     , p_header_typ            in          varchar2 default g_header_typ
     , p_header_cty            in          varchar2 default g_header_cty
@@ -44,6 +75,7 @@ as
     , p_reg_claim_notbefore   in          number default g_reg_claim_notbefore
     , p_reg_claim_issuedat    in          number default g_reg_claim_issuedat
     , p_reg_claim_jwtid       in          varchar2 default g_reg_claim_jwtid
+    , p_signature_key         in          varchar2 default g_encryption_key
   )
   return varchar2
 
@@ -56,7 +88,7 @@ as
 
   begin
 
-    dbms_application_info.set_action('jwt_generate');
+    dbms_application_info.set_action('jwt_generate_int');
 
     -- Generate header data
     l_header_data := '{ "alg": "'|| p_header_alg ||'", "typ": "'|| p_header_typ ||'"';
@@ -98,9 +130,73 @@ as
 
     -- Generate signature data
     l_signature_data := gp_header_enc || '.' || gp_payload_enc;
-    gp_signature_enc := base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(l_signature_data), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(gp_secret))));
+    gp_signature_enc := encryptthis(l_signature_data, p_signature_key);
 
     l_ret_var := gp_header_enc || '.' || gp_payload_enc || '.' || gp_signature_enc;
+
+    dbms_application_info.set_action(null);
+
+    return l_ret_var;
+
+    exception
+      when others then
+        dbms_application_info.set_action(null);
+        raise;
+
+  end jwt_generate_int;
+
+  function jwt_generate (
+    p_header_alg              in          varchar2 default g_header_alg
+    , p_header_typ            in          varchar2 default g_header_typ
+    , p_header_cty            in          varchar2 default g_header_cty
+    , p_reg_claim_issuer      in          varchar2 default g_reg_claim_issuer
+    , p_reg_claim_subject     in          varchar2 default g_reg_claim_subject
+    , p_reg_claim_audience    in          varchar2 default g_reg_claim_audience
+    , p_reg_claim_expiration  in          date default g_reg_claim_expiration_d
+    , p_reg_claim_notbefore   in          date default g_reg_claim_notbefore_d
+    , p_reg_claim_issuedat    in          date default g_reg_claim_issuedat_d
+    , p_reg_claim_jwtid       in          varchar2 default g_reg_claim_jwtid
+    , p_signature_key         in          varchar2 default g_encryption_key
+  )
+  return varchar2
+
+  as
+
+    l_ret_var               varchar2(32000);
+
+    l_exp                   number := null;
+    l_nbf                   number := null;
+    l_iat                   number := null;
+
+  begin
+
+    dbms_application_info.set_action('jwt_generate');
+
+    if p_reg_claim_expiration is not null then
+      l_exp := getepoch(p_reg_claim_expiration);
+    end if;
+
+    if p_reg_claim_notbefore is not null then
+      l_nbf := getepoch(p_reg_claim_notbefore);
+    end if;
+
+    if p_reg_claim_issuedat is not null then
+      l_iat := getepoch(p_reg_claim_issuedat);
+    end if;
+
+    l_ret_var := jwt_generate_int(
+      p_header_alg
+      , p_header_typ
+      , p_header_cty
+      , p_reg_claim_issuer
+      , p_reg_claim_subject
+      , p_reg_claim_audience
+      , l_exp
+      , l_nbf
+      , l_iat
+      , p_reg_claim_jwtid
+      , p_signature_key
+    );
 
     dbms_application_info.set_action(null);
 
