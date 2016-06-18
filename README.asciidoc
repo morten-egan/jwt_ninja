@@ -1,13 +1,9 @@
 = jwt_ninja
 Morten Egan <morten@plsql.ninja>
 
-This is a PLSQL implementation of JWT (JSON Web Tokens) as defined in https://tools.ietf.org/html/rfc7519[RFC7519]
-
-[NOTE]
-Since this is the first check-in, not much info has been added yet.
-But he will do soon.
-
 == Summary
+
+This is a PLSQL implementation of JWT (JSON Web Tokens) as defined in https://tools.ietf.org/html/rfc7519[RFC7519]
 
 == Pre-requisites
 
@@ -32,4 +28,8 @@ SQL>
 
 == Procedures and Functions
 
+* jwt_generate
+
 == Examples
+
+For a detailed demo of this package, please see my blog entries on the package on my http://www.codemonth.dk/code_is_good/dev_qa_prod.assert?condition=codemonth:::17:[Codemonth website]
