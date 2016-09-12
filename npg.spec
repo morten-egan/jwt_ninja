@@ -14,7 +14,6 @@ execute: dbms_crypto
 ordbms: ver_le_11_2
 privilege: create procedure
 [files]
-install.order: order file
 jwt_ninja.package.sql: package
 jwt_ninja.package body.sql: package body
 [npgend]
