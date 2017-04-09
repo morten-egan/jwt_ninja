@@ -55,6 +55,7 @@ as
   procedure jwt_verify_and_decode (
     p_token                   in          varchar2
     , p_secret                in          varchar2
+    , p_do_parse              in          boolean default false
     , p_verified              out         boolean
     , p_reg_claim_issuer      out         varchar2
     , p_reg_claim_subject     out         varchar2

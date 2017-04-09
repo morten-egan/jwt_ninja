@@ -225,6 +225,7 @@ as
   procedure jwt_verify_and_decode (
     p_token                   in          varchar2
     , p_secret                in          varchar2
+    , p_do_parse              in          boolean default false
     , p_verified              out         boolean
     , p_reg_claim_issuer      out         varchar2
     , p_reg_claim_subject     out         varchar2
@@ -264,17 +265,19 @@ as
 
     if encryptthis(l_signature_data, p_secret) = l_signature then
       -- Token is verified. Extract data.
-      l_header_decoded := unbase64this(l_header);
-      l_payload_decoded := unbase64this(l_payload);
-      if instr(l_payload_decoded, '"iss":') > 0 then
-        l_start_from := instr(l_payload_decoded, '"iss":') + 8;
-        l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
-        l_reg_claim_issuer := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
-      end if;
-      if instr(l_payload_decoded, '"sub":') > 0 then
-        l_start_from := instr(l_payload_decoded, '"sub":') + 8;
-        l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
-        l_reg_claim_issuer := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
+      if p_do_parse then
+        l_header_decoded := unbase64this(l_header);
+        l_payload_decoded := unbase64this(l_payload);
+        if instr(l_payload_decoded, '"iss":') > 0 then
+          l_start_from := instr(l_payload_decoded, '"iss":') + 8;
+          l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
+          l_reg_claim_issuer := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
+        end if;
+        if instr(l_payload_decoded, '"sub":') > 0 then
+          l_start_from := instr(l_payload_decoded, '"sub":') + 8;
+          l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
+          l_reg_claim_subject := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
+        end if;
       end if;
       l_verified := true;
     end if;
