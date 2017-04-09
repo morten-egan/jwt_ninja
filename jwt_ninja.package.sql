@@ -48,5 +48,22 @@ as
   )
   return varchar2;
 
+  /** Verify and Decode the JWT token.
+  * @author Morten Egan
+  * @param p_token The token that should be verified and decoded.
+  */
+  procedure jwt_verify_and_decode (
+    p_token                   in          varchar2
+    , p_secret                in          varchar2
+    , p_verified              out         boolean
+    , p_reg_claim_issuer      out         varchar2
+    , p_reg_claim_subject     out         varchar2
+    , p_reg_claim_audience    out         varchar2
+    , p_reg_claim_expiration  out         date
+    , p_reg_claim_notbefore   out         date
+    , p_reg_claim_issuedat    out         date
+    , p_reg_claim_jwtid       out         varchar2
+  );
+
 end jwt_ninja;
 /

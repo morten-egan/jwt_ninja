@@ -20,6 +20,19 @@ as
 
   end base64this;
 
+  function unbase64this (
+    p_string                  in          varchar2
+  )
+  return varchar2
+
+  as
+
+  begin
+
+    return utl_raw.cast_to_varchar2(utl_encode.base64_decode(utl_raw.cast_to_raw(p_string)));
+
+  end unbase64this;
+
   function getepoch (
     p_attime                  in          date default sysdate
   )
@@ -52,14 +65,14 @@ as
     end if;
 
     if g_header_alg = 'HS256' then
-      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(gp_secret))));
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(l_set_key))));
     elsif g_header_alg = 'HS384' then
-      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH384, utl_raw.cast_to_raw(gp_secret))));
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH384, utl_raw.cast_to_raw(l_set_key))));
     elsif g_header_alg = 'HS512' then
-      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH512, utl_raw.cast_to_raw(gp_secret))));
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH512, utl_raw.cast_to_raw(l_set_key))));
     else
       g_header_alg := 'HS256';
-      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(gp_secret))));
+      return base64this(utl_raw.cast_to_varchar2(dbms_crypto.mac(utl_raw.cast_to_raw(p_string), dbms_crypto.HMAC_SH256, utl_raw.cast_to_raw(l_set_key))));
     end if;
 
   end encryptthis;
@@ -208,6 +221,82 @@ as
         raise;
 
   end jwt_generate;
+
+  procedure jwt_verify_and_decode (
+    p_token                   in          varchar2
+    , p_secret                in          varchar2
+    , p_verified              out         boolean
+    , p_reg_claim_issuer      out         varchar2
+    , p_reg_claim_subject     out         varchar2
+    , p_reg_claim_audience    out         varchar2
+    , p_reg_claim_expiration  out         date
+    , p_reg_claim_notbefore   out         date
+    , p_reg_claim_issuedat    out         date
+    , p_reg_claim_jwtid       out         varchar2
+  )
+
+  as
+
+    l_header                varchar2(4000) := substr(p_token, 1, instr(p_token, '.') - 1);
+    l_payload               varchar2(4000) := substr(p_token, instr(p_token, '.') + 1, (instr(p_token, '.', 1, 2)) - (instr(p_token, '.') + 1));
+    l_signature             varchar2(4000) := substr(p_token, (instr(p_token, '.', 1, 2) + 1));
+
+    l_signature_data        varchar2(4000) := l_header || '.' || l_payload;
+
+    l_header_decoded        varchar2(4000);
+    l_payload_decoded       varchar2(4000);
+
+    l_verified              boolean := false;
+    l_reg_claim_issuer      varchar2(4000) := null;
+    l_reg_claim_subject     varchar2(4000) := null;
+    l_reg_claim_audience    varchar2(4000) := null;
+    l_reg_claim_expiration  date := null;
+    l_reg_claim_notbefore   date := null;
+    l_reg_claim_issuedat    date := null;
+    l_reg_claim_jwtid       varchar2(4000) := null;
+
+    l_start_from            number;
+    l_stop_at               number;
+
+  begin
+
+    dbms_application_info.set_action('jwt_verify_and_decode');
+
+    if encryptthis(l_signature_data, p_secret) = l_signature then
+      -- Token is verified. Extract data.
+      l_header_decoded := unbase64this(l_header);
+      l_payload_decoded := unbase64this(l_payload);
+      if instr(l_payload_decoded, '"iss":') > 0 then
+        l_start_from := instr(l_payload_decoded, '"iss":') + 8;
+        l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
+        l_reg_claim_issuer := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
+      end if;
+      if instr(l_payload_decoded, '"sub":') > 0 then
+        l_start_from := instr(l_payload_decoded, '"sub":') + 8;
+        l_stop_at := instr(l_payload_decoded, '"', l_start_from, 1);
+        l_reg_claim_issuer := substr(l_payload_decoded, l_start_from, l_stop_at - l_start_from);
+      end if;
+      l_verified := true;
+    end if;
+
+    p_reg_claim_issuer := l_reg_claim_issuer;
+    p_reg_claim_subject := l_reg_claim_subject;
+    p_reg_claim_audience := l_reg_claim_audience;
+    p_reg_claim_expiration := l_reg_claim_expiration;
+    p_reg_claim_notbefore := l_reg_claim_notbefore;
+    p_reg_claim_issuedat := l_reg_claim_issuedat;
+    p_reg_claim_jwtid := l_reg_claim_jwtid;
+
+    p_verified := l_verified;
+
+    dbms_application_info.set_action(null);
+
+    exception
+      when others then
+        dbms_application_info.set_action(null);
+        raise;
+
+  end jwt_verify_and_decode;
 
 begin
 
