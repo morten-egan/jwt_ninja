@@ -16,7 +16,7 @@ as
 
   begin
 
-    return replace(utl_raw.cast_to_varchar2(utl_encode.base64_encode(utl_raw.cast_to_raw(p_string))),'=');
+    return translate((replace(utl_raw.cast_to_varchar2(utl_encode.base64_encode(utl_raw.cast_to_raw(p_string))),'=')), unistr('+/=\000a\000d'), '-_');
 
   end base64this;
 
