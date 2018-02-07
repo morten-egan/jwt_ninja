@@ -42,7 +42,7 @@ as
 
   begin
 
-    return (p_attime- to_date('1-1-1970 00:00:00','MM-DD-YYYY HH24:Mi:SS'))*24*60*60*1000;
+    return (p_attime- to_date('1-1-1970 00:00:00','MM-DD-YYYY HH24:Mi:SS'))*24*60*60;
 
   end getepoch;
 
